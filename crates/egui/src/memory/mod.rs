@@ -1162,7 +1162,9 @@ impl Areas {
     pub fn top_layer_id(&self, order: Order) -> Option<LayerId> {
         self.order
             .iter()
-            .filter(|layer| layer.order == order && !self.is_sublayer(layer))
+            .filter(|layer| {
+                layer.order == order && !self.is_sublayer(layer) && self.is_visible(layer)
+            })
             .last()
             .copied()
     }
