@@ -491,6 +491,9 @@ pub(crate) struct Focus {
 
     /// A cache of widget IDs that are interested in focus with their corresponding rectangles.
     focus_widgets_cache: IdMap<Rect>,
+
+    /// The default event filter
+    event_filter: EventFilter,
 }
 
 /// The widget with focus.
@@ -522,12 +525,16 @@ impl Focus {
         self.focused_widget.as_ref().map(|w| w.id)
     }
 
+    pub fn set_event_filter(&mut self, event_filter: EventFilter) {
+        self.event_filter = event_filter;
+    }
+
     fn begin_pass(&mut self, new_input: &crate::data::input::RawInput) {
         self.id_previous_frame = self.focused();
         if let Some(id) = self.id_next_frame.take() {
             self.focused_widget = Some(FocusWidget::new(id));
         }
-        let event_filter = self.focused_widget.map(|w| w.filter).unwrap_or_default();
+        let event_filter = self.focused_widget.map_or(self.event_filter, |w| w.filter);
 
         #[cfg(feature = "accesskit")]
         {
@@ -928,6 +935,11 @@ impl Memory {
             return;
         }
         self.focus_mut().interested_in_focus(id);
+    }
+
+    /// Defines the default event filter.
+    pub fn set_default_event_filter(&mut self, event_filter: EventFilter) {
+        self.focus_mut().set_event_filter(event_filter);
     }
 
     /// Limit focus to widgets on the given layer and above.
